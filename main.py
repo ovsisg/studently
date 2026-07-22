@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QMainWindow, QApplication, QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, \
-QLineEdit, QComboBox, QDateEdit, QPushButton, QToolBar, QStatusBar
+QLineEdit, QComboBox, QDateEdit, QPushButton, QToolBar, QStatusBar, QGridLayout, QLabel
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import QDate, Qt
 from PyQt6.QtGui import QColor
@@ -209,10 +209,37 @@ class EditDialog(QDialog):
         cursor.close()
         conn.close()
         main_window.load_data()
+        self.close()
 
 class DeleteDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Studently")
+
+        layout = QGridLayout()
+        confirmation = QLabel("Are you sure you want to delete it?")
+        yes_button = QPushButton("Yes")
+        no_button = QPushButton("No")
+
+        layout.addWidget(confirmation, 0, 0, 1, 2)
+        layout.addWidget(yes_button, 1, 0)
+        layout.addWidget(no_button, 1, 1)
+        self.setLayout(layout)
+
+        yes_button.clicked.connect(self.delete_student)
+
+    def delete_student(self):
+        index = main_window.table.currentRow()
+        id = main_window.table.item(index, 0).text()
+
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM student WHERE id = ?", (id, ))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        main_window.load_data()
+        self.close()
 
 app = QApplication(sys.argv)   
 main_window = MainWindow()
