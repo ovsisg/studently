@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import QMainWindow, QApplication, QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, \
 QLineEdit, QComboBox, QDateEdit, QPushButton
 from PyQt6.QtGui import QAction
-from PyQt6.QtCore import QDate
+from PyQt6.QtCore import QDate, Qt
+from PyQt6.QtGui import QColor
 import sys
 import sqlite3
 
@@ -12,13 +13,18 @@ class MainWindow(QMainWindow):
         
         file_menu_item = self.menuBar().addMenu("&File")
         help_menu_item = self.menuBar().addMenu("&Help")
+        edit_menu_item = self.menuBar().addMenu("&Edit")
         
         add_student_action = QAction("Add Student", self)
-        add_student_action.triggered.connect(self.insert)
+        add_student_action.triggered.connect(self.open_add_dialog)
         file_menu_item.addAction(add_student_action)
         
         about_action = QAction("About", self)
         help_menu_item.addAction(about_action)
+        
+        search_student_action = QAction("Search", self)
+        search_student_action.triggered.connect(self.open_search_dialog)
+        edit_menu_item.addAction(search_student_action)
         
         self.table = QTableWidget()
         self.table.setColumnCount(5)
@@ -37,11 +43,15 @@ class MainWindow(QMainWindow):
                 
         conn.close()
         
-    def insert(self):
-        dialog = InsertDialog()
+    def open_add_dialog(self):
+        dialog = AddDialog()
+        dialog.exec()
+
+    def open_search_dialog(self):
+        dialog = SearchDialog()
         dialog.exec()
         
-class InsertDialog(QDialog):
+class AddDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Studently")
@@ -87,6 +97,32 @@ class InsertDialog(QDialog):
         cursor.close()
         conn.close()
         main_window.load_data()
+        
+class SearchDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Studently")
+        self.setFixedSize(600, 600)
+
+        layout = QVBoxLayout()
+        
+        self.student_name = QLineEdit()
+        self.student_name.setPlaceholderText("Name")
+        layout.addWidget(self.student_name)
+        
+        button = QPushButton("Search")
+        button.clicked.connect(self.search_student)
+        layout.addWidget(button)
+        
+        self.setLayout(layout)
+        
+    def search_student(self):
+        name = self.student_name.text()
+       
+        items = main_window.table.findItems(name, Qt.MatchFlag.MatchFixedString)
+        for item in items:
+            for col in range(main_window.table.columnCount()):
+                main_window.table.item(item.row(), col).setBackground(QColor("yellow"))
 
 app = QApplication(sys.argv)   
 main_window = MainWindow()
