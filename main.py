@@ -94,19 +94,19 @@ class AddDialog(QDialog):
 
         layout = QVBoxLayout()
         
-        self.student_name = QLineEdit()
-        self.student_name.setPlaceholderText("Name")
-        layout.addWidget(self.student_name)
+        self.name = QLineEdit()
+        self.name.setPlaceholderText("Name")
+        layout.addWidget(self.name)
         
         self.date_of_birth = QDateEdit()
         self.date_of_birth.setCalendarPopup(True)
         self.date_of_birth.setDate(QDate.currentDate())
         layout.addWidget(self.date_of_birth)
         
-        self.course_name = QComboBox()
+        self.course = QComboBox()
         courses = ["Computer Science BSc", "Cyber Security BSc", "History BA", "Biology BSc", "Biomedical Science BSc", "Zoology BSc"]
-        self.course_name.addItems(courses)
-        layout.addWidget(self.course_name)
+        self.course.addItems(courses)
+        layout.addWidget(self.course)
         
         self.email = QLineEdit()
         self.email.setPlaceholderText("Email")
@@ -119,9 +119,9 @@ class AddDialog(QDialog):
         self.setLayout(layout)
         
     def add_student(self):
-        name = self.student_name.text()
+        name = self.name.text()
         date_of_birth = self.date_of_birth.date().toString("dd/MM/yyyy")
-        course = self.course_name.itemText(self.course_name.currentIndex())
+        course = self.course.itemText(self.course.currentIndex())
         email = self.email.text()
 
         conn = sqlite3.connect("database.db")
@@ -141,9 +141,9 @@ class SearchDialog(QDialog):
 
         layout = QVBoxLayout()
         
-        self.student_name = QLineEdit()
-        self.student_name.setPlaceholderText("Name")
-        layout.addWidget(self.student_name)
+        self.name = QLineEdit()
+        self.name.setPlaceholderText("Name")
+        layout.addWidget(self.name)
         
         button = QPushButton("Search")
         button.clicked.connect(self.search_student)
@@ -152,7 +152,7 @@ class SearchDialog(QDialog):
         self.setLayout(layout)
         
     def search_student(self):
-        name = self.student_name.text()
+        name = self.name.text()
        
         items = main_window.table.findItems(name, Qt.MatchFlag.MatchFixedString)
         for item in items:
@@ -162,7 +162,53 @@ class SearchDialog(QDialog):
 class EditDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Studently")
+        self.setFixedSize(300, 300)
 
+        layout = QVBoxLayout()
+        index = main_window.table.currentRow()
+
+        self.id = main_window.table.item(index, 0).text()
+
+        name = main_window.table.item(index, 1).text()
+        self.name = QLineEdit(name)
+        self.name.setPlaceholderText("Name")
+        layout.addWidget(self.name)
+
+        date_of_birth = main_window.table.item(index, 2).text()
+        self.date_of_birth = QDateEdit()
+        self.date_of_birth.setCalendarPopup(True)
+        self.date_of_birth.setDate(QDate.fromString(date_of_birth, "dd/MM/yyyy"))
+        layout.addWidget(self.date_of_birth)
+
+        course = main_window.table.item(index, 3).text()
+        self.course = QComboBox()
+        courses = ["Computer Science BSc", "Cyber Security BSc", "History BA", "Biology BSc", "Biomedical Science BSc", "Zoology BSc"]
+        self.course.addItems(courses)
+        self.course.setCurrentText(course)
+        layout.addWidget(self.course)
+
+        email = main_window.table.item(index, 4).text()
+        self.email = QLineEdit(email)
+        self.email.setPlaceholderText("Email")
+        layout.addWidget(self.email)
+        
+        button = QPushButton("Update")
+        button.clicked.connect(self.update_student)
+        layout.addWidget(button)
+        
+        self.setLayout(layout)
+
+    def update_student(self):
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("UPDATE student SET name = ?, date_of_birth = ?, course = ?, email = ? WHERE id = ?",
+                       (self.name.text(), self.date_of_birth.text(), self.course.itemText(self.course.currentIndex()), 
+                        self.email.text(), self.id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        main_window.load_data()
 
 class DeleteDialog(QDialog):
     def __init__(self):
