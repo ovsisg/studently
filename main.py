@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QMainWindow, QApplication, QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, \
-QLineEdit, QComboBox, QDateEdit, QPushButton, QToolBar
+QLineEdit, QComboBox, QDateEdit, QPushButton, QToolBar, QStatusBar
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import QDate, Qt
 from PyQt6.QtGui import QColor
@@ -35,10 +35,16 @@ class MainWindow(QMainWindow):
 
         toolbar = QToolBar()
         toolbar.setMovable(False)
+        toolbar.setStyleSheet("border: none;")
         self.addToolBar(toolbar)
         toolbar.addAction(add_student_action)
         toolbar.addAction(search_student_action)
-        
+
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+
+        self.table.cellClicked.connect(self.cell_clicked)
+
     def load_data(self):
         conn = sqlite3.connect("database.db")
         result = conn.execute("SELECT * FROM student")
@@ -50,6 +56,20 @@ class MainWindow(QMainWindow):
                 
         conn.close()
         
+    def cell_clicked(self):
+        children = self.findChildren(QPushButton)
+        if children:
+            for child in children:
+                self.status_bar.removeWidget(child)
+
+        edit_button = QPushButton("Edit Record")
+        edit_button.clicked.connect(self.open_edit_dialog)
+        self.status_bar.addWidget(edit_button)
+
+        delete_button = QPushButton("Delete Record")
+        delete_button.clicked.connect(self.open_delete_dialog)
+        self.status_bar.addWidget(delete_button)
+        
     def open_add_dialog(self):
         dialog = AddDialog()
         dialog.exec()
@@ -57,7 +77,15 @@ class MainWindow(QMainWindow):
     def open_search_dialog(self):
         dialog = SearchDialog()
         dialog.exec()
-        
+
+    def open_edit_dialog(self):
+        dialog = EditDialog()
+        dialog.exec()
+
+    def open_delete_dialog(self):
+        dialog = DeleteDialog()
+        dialog.exec()
+
 class AddDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -130,6 +158,15 @@ class SearchDialog(QDialog):
         for item in items:
             for col in range(main_window.table.columnCount()):
                 main_window.table.item(item.row(), col).setBackground(QColor("yellow"))
+
+class EditDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+
+class DeleteDialog(QDialog):
+    def __init__(self):
+        super().__init__()
 
 app = QApplication(sys.argv)   
 main_window = MainWindow()
