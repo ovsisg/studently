@@ -22,6 +22,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Studently")
         self.setFixedSize(600, 600)
 
+        # Create the menu bar with File, Help, and Edit menus
         file_menu = self.menuBar().addMenu("&File")
         help_menu = self.menuBar().addMenu("&Help")
         edit_menu = self.menuBar().addMenu("&Edit")
@@ -37,16 +38,18 @@ class MainWindow(QMainWindow):
         search_student_action = QAction(QIcon("icons/search.png"), "Search", self)
         search_student_action.triggered.connect(self.open_search_dialog)
         edit_menu.addAction(search_student_action)
-        
+
+        # Create the table that will display all records
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(("ID", "Name", "Date of Birth", "Course", "Email"))
         self.table.verticalHeader().setVisible(False)
         self.setCentralWidget(self.table)    
 
+        # Create a toolbar and add the actions to it for quick access
         toolbar = QToolBar()
         toolbar.setMovable(False)
-        toolbar.setStyleSheet("border: none;")
+        toolbar.setStyleSheet("border: none;") # Remove the default border underneath the toolbar
         self.addToolBar(toolbar)
         toolbar.addAction(add_student_action)
         toolbar.addAction(search_student_action)
@@ -57,6 +60,7 @@ class MainWindow(QMainWindow):
         self.table.cellClicked.connect(self.cell_clicked)
 
     def load_data(self):
+        # Retrieve all students from database and display them in the table
         conn = DatabaseConnection().connect()
         result = conn.execute("SELECT * FROM student")
         self.table.setRowCount(0)
@@ -68,15 +72,18 @@ class MainWindow(QMainWindow):
         conn.close()
         
     def cell_clicked(self):
+        # Remove any existing buttons from the status bar
         children = self.findChildren(QPushButton)
         if children:
             for child in children:
                 self.status_bar.removeWidget(child)
 
+        # Create an Edit Record button and add it to the status bar
         edit_button = QPushButton("Edit Record")
         edit_button.clicked.connect(self.open_edit_dialog)
         self.status_bar.addWidget(edit_button)
 
+        # Create a Delete Record button and add it to the status bar
         delete_button = QPushButton("Delete Record")
         delete_button.clicked.connect(self.open_delete_dialog)
         self.status_bar.addWidget(delete_button)
@@ -108,24 +115,29 @@ class AddDialog(QDialog):
         self.setFixedSize(300, 300)
 
         layout = QVBoxLayout()
-        
+
+        # Input field for the student's name
         self.name = QLineEdit()
         self.name.setPlaceholderText("Name")
         layout.addWidget(self.name)
-        
+
+        # Date picker for the student's date of birth
         self.date_of_birth = QDateEdit()
-        self.date_of_birth.setCalendarPopup(True)
-        self.date_of_birth.setDate(QDate.currentDate())
+        self.date_of_birth.setCalendarPopup(True) # Show a calendar when clicked
+        self.date_of_birth.setDate(QDate.currentDate()) # Default to today's date
         layout.addWidget(self.date_of_birth)
-        
+
+        # Dropdown menu for selecting the student's course
         self.course = QComboBox()
         self.course.addItems(courses)
         layout.addWidget(self.course)
-        
+
+        # Input field for the student's email
         self.email = QLineEdit()
         self.email.setPlaceholderText("Email")
         layout.addWidget(self.email)
-        
+
+        # Button to submit and add the new student
         button = QPushButton("Add")
         button.clicked.connect(self.add_student)
         layout.addWidget(button)
@@ -133,6 +145,7 @@ class AddDialog(QDialog):
         self.setLayout(layout)
         
     def add_student(self):
+        # Get all the input values from the dialog
         name = self.name.text()
         date_of_birth = self.date_of_birth.date().toString("dd/MM/yyyy")
         course = self.course.itemText(self.course.currentIndex())
@@ -146,6 +159,7 @@ class AddDialog(QDialog):
         cursor.close()
         conn.close()
         main_window.load_data()
+        self.close()
 
 class AboutDialog(QMessageBox):
     def __init__(self):
@@ -175,11 +189,14 @@ class SearchDialog(QDialog):
         
     def search_student(self):
         name = self.name.text()
-       
+        # Search the table for matching names
         items = main_window.table.findItems(name, Qt.MatchFlag.MatchFixedString)
+        # Highlight each matching row with a yellow background
         for item in items:
             for col in range(main_window.table.columnCount()):
                 main_window.table.item(item.row(), col).setBackground(QColor("yellow"))
+
+        self.close()
 
 class EditDialog(QDialog):
     def __init__(self):
@@ -188,12 +205,13 @@ class EditDialog(QDialog):
         self.setFixedSize(300, 300)
 
         layout = QVBoxLayout()
+        # Get the currently selected row from the table
         index = main_window.table.currentRow()
 
         self.id = main_window.table.item(index, 0).text()
 
-        name = main_window.table.item(index, 1).text()
-        self.name = QLineEdit(name)
+        name = main_window.table.item(index, 1).text() # Gets the name from the table
+        self.name = QLineEdit(name) # Creates the input box with the name already inside it
         self.name.setPlaceholderText("Name")
         layout.addWidget(self.name)
 
