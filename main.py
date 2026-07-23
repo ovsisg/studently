@@ -6,27 +6,37 @@ from PyQt6.QtGui import QColor
 import sys
 import sqlite3
 
+courses = ["Computer Science BSc", "Cyber Security BSc", "History BA", "Biology BSc", "Biomedical Science BSc", "Zoology BSc"]
+
+class DatabaseConnection:
+    def __init__(self, db_file = "database.db"):
+        self.db_file = db_file
+
+    def connect(self):
+        conn = sqlite3.connect(self.db_file)
+        return conn
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Studently")
         self.setFixedSize(600, 600)
 
-        file_menu_item = self.menuBar().addMenu("&File")
-        help_menu_item = self.menuBar().addMenu("&Help")
-        edit_menu_item = self.menuBar().addMenu("&Edit")
+        file_menu = self.menuBar().addMenu("&File")
+        help_menu = self.menuBar().addMenu("&Help")
+        edit_menu = self.menuBar().addMenu("&Edit")
         
         add_student_action = QAction(QIcon("icons/add.png"), "Add Student", self)
         add_student_action.triggered.connect(self.open_add_dialog)
-        file_menu_item.addAction(add_student_action)
+        file_menu.addAction(add_student_action)
         
         about_action = QAction("About", self)
-        help_menu_item.addAction(about_action)
+        help_menu.addAction(about_action)
         about_action.triggered.connect(self.open_about_dialog)
         
         search_student_action = QAction(QIcon("icons/search.png"), "Search", self)
         search_student_action.triggered.connect(self.open_search_dialog)
-        edit_menu_item.addAction(search_student_action)
+        edit_menu.addAction(search_student_action)
         
         self.table = QTableWidget()
         self.table.setColumnCount(5)
@@ -47,7 +57,7 @@ class MainWindow(QMainWindow):
         self.table.cellClicked.connect(self.cell_clicked)
 
     def load_data(self):
-        conn = sqlite3.connect("database.db")
+        conn = DatabaseConnection().connect()
         result = conn.execute("SELECT * FROM student")
         self.table.setRowCount(0)
         for row_index, row_data in enumerate(result):
@@ -109,7 +119,6 @@ class AddDialog(QDialog):
         layout.addWidget(self.date_of_birth)
         
         self.course = QComboBox()
-        courses = ["Computer Science BSc", "Cyber Security BSc", "History BA", "Biology BSc", "Biomedical Science BSc", "Zoology BSc"]
         self.course.addItems(courses)
         layout.addWidget(self.course)
         
@@ -129,7 +138,7 @@ class AddDialog(QDialog):
         course = self.course.itemText(self.course.currentIndex())
         email = self.email.text()
 
-        conn = sqlite3.connect("database.db")
+        conn = DatabaseConnection().connect()
         cursor = conn.cursor()
         cursor.execute("INSERT INTO student (name, date_of_birth, course, email) VALUES (?, ?, ?, ?)", 
                        (name, date_of_birth, course, email))
@@ -196,7 +205,6 @@ class EditDialog(QDialog):
 
         course = main_window.table.item(index, 3).text()
         self.course = QComboBox()
-        courses = ["Computer Science BSc", "Cyber Security BSc", "History BA", "Biology BSc", "Biomedical Science BSc", "Zoology BSc"]
         self.course.addItems(courses)
         self.course.setCurrentText(course)
         layout.addWidget(self.course)
@@ -213,7 +221,7 @@ class EditDialog(QDialog):
         self.setLayout(layout)
 
     def update_student(self):
-        conn = sqlite3.connect("database.db")
+        conn = DatabaseConnection().connect()
         cursor = conn.cursor()
         cursor.execute("UPDATE student SET name = ?, date_of_birth = ?, course = ?, email = ? WHERE id = ?",
                        (self.name.text(), self.date_of_birth.text(), self.course.itemText(self.course.currentIndex()), 
@@ -245,7 +253,7 @@ class DeleteDialog(QDialog):
         index = main_window.table.currentRow()
         id = main_window.table.item(index, 0).text()
 
-        conn = sqlite3.connect("database.db")
+        conn = DatabaseConnection().connect()
         cursor = conn.cursor()
         cursor.execute("DELETE FROM student WHERE id = ?", (id, ))
         conn.commit()
