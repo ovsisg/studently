@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QMainWindow, QApplication, QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, \
-QLineEdit, QComboBox, QDateEdit, QPushButton, QToolBar, QStatusBar, QGridLayout, QLabel
+QLineEdit, QComboBox, QDateEdit, QPushButton, QToolBar, QStatusBar, QGridLayout, QLabel, QMessageBox
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import QDate, Qt
 from PyQt6.QtGui import QColor
@@ -22,6 +22,7 @@ class MainWindow(QMainWindow):
         
         about_action = QAction("About", self)
         help_menu_item.addAction(about_action)
+        about_action.triggered.connect(self.open_about_dialog)
         
         search_student_action = QAction(QIcon("icons/search.png"), "Search", self)
         search_student_action.triggered.connect(self.open_search_dialog)
@@ -86,6 +87,10 @@ class MainWindow(QMainWindow):
         dialog = DeleteDialog()
         dialog.exec()
 
+    def open_about_dialog(self):
+        dialog = AboutDialog()
+        dialog.exec()
+
 class AddDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -132,6 +137,14 @@ class AddDialog(QDialog):
         cursor.close()
         conn.close()
         main_window.load_data()
+
+class AboutDialog(QMessageBox):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Studently")
+        content = """Miles is an npc. Now npcs are rare to find. Well, actually, no. People are sheep nowadays.
+        """
+        self.setText(content)
         
 class SearchDialog(QDialog):
     def __init__(self):
